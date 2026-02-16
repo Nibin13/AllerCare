@@ -1,6 +1,9 @@
+// ---------- CONFIGURATION ----------
+// This is your live Render backend URL
+const API_URL = "https://allercare-backend.onrender.com";
+
 // ---------- MODULE NAVIGATION ----------
 function showModule(moduleId) {
-    // 1. Hide all modules and the dashboard
     const modules = document.querySelectorAll('.module');
     const dashboard = document.getElementById('dashboard');
     const header = document.getElementById('main-header');
@@ -8,21 +11,20 @@ function showModule(moduleId) {
     modules.forEach(mod => mod.style.display = 'none');
     dashboard.style.display = 'none';
 
-    // 2. Show the selected module
     if (moduleId === 'dashboard') {
         dashboard.style.display = 'flex';
-        header.style.display = 'block'; // Show header on dashboard
+        header.style.display = 'block';
     } else {
         const selected = document.getElementById(moduleId);
         if (selected) {
-            header.style.display = 'none'; // Hide header for full-screen module experience
+            header.style.display = 'none';
             selected.style.display = 'block';
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
 }
 
-// ---------- AUTHENTICATION (LOGIN & REGISTER) ----------
+// ---------- AUTHENTICATION ----------
 
 function login() {
     const email = document.getElementById('email').value.trim();
@@ -33,7 +35,7 @@ function login() {
         return;
     }
 
-    fetch('http://127.0.0.1:5000/login', {
+    fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email, password: password })
@@ -45,15 +47,9 @@ function login() {
         return res.json();
     })
     .then(data => {
-        // 1. Save data
         localStorage.setItem('userId', data.user_id);
         localStorage.setItem('userName', data.name);
-
-        // 2. Debugging: Log to console to verify data is saved before moving on
         console.log("Session saved:", localStorage.getItem('userId'));
-
-        // 3. IMPORTANT: Use window.location.replace instead of reload
-        // This clears the 'login' state from the history and forces a fresh load
         window.location.replace("index.html"); 
     })
     .catch(error => {
@@ -74,7 +70,7 @@ function register(event) {
         return;
     }
 
-    fetch('http://127.0.0.1:5000/register', {
+    fetch(`${API_URL}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name, email: email, password: password })
@@ -83,7 +79,7 @@ function register(event) {
     .then(data => {
         if (data.message === 'Registration successful') {
             alert("Registration successful! Please login.");
-            toggleAuth('login-card'); // Switch view to login
+            if (typeof toggleAuth === 'function') toggleAuth('login-card');
         } else {
             alert(data.error || "Registration failed.");
         }
@@ -117,7 +113,7 @@ function displayUser() {
 // ---------- AUTOCOMPLETE LOGIC ----------
 
 function loadSuggestions() {
-    fetch('http://127.0.0.1:5000/get_products')
+    fetch(`${API_URL}/get_products`)
         .then(res => res.json())
         .then(products => {
             const dataList = document.getElementById('productSuggestions');
@@ -134,7 +130,7 @@ function loadSuggestions() {
 }
 
 function loadSkincareSuggestions() {
-    fetch('http://127.0.0.1:5000/get_skincare_meta')
+    fetch(`${API_URL}/get_skincare_meta`)
         .then(res => res.json())
         .then(data => {
             const labelList = document.getElementById('labelSuggestions');
@@ -170,7 +166,7 @@ function analyzeFood() {
 
     resultDisplay.innerHTML = '<div class="note"><i class="fas fa-spinner fa-spin"></i> Analyzing Ingredients...</div>';
 
-    fetch('http://127.0.0.1:5000/predict_food', {
+    fetch(`${API_URL}/predict_food`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ingredients: productInput, user_id: userId })
@@ -206,7 +202,7 @@ function analyzeSkincareV2() {
 
     resultDisplay.innerHTML = '<div class="note"><i class="fas fa-spinner fa-spin"></i> Analyzing Brand Profile...</div>';
 
-    fetch('http://127.0.0.1:5000/predict_skincare_v2', {
+    fetch(`${API_URL}/predict_skincare_v2`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ label: label, brand: brand })
@@ -241,7 +237,7 @@ function analyzeMedicineV2() {
 
     resultDisplay.innerHTML = '<div class="note"><i class="fas fa-spinner fa-spin"></i> Searching Database...</div>';
 
-    fetch('http://127.0.0.1:5000/predict_medicine_v2', {
+    fetch(`${API_URL}/predict_medicine_v2`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ medicine: medName })
@@ -266,7 +262,6 @@ function analyzeMedicineV2() {
 
 // ---------- INITIALIZATION ----------
 window.onload = function() {
-    // Only load data if the user is already logged in
     if (localStorage.getItem('userId')) {
         displayUser();
         if (document.getElementById('productSuggestions')) loadSuggestions();
